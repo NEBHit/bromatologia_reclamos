@@ -1,0 +1,17 @@
+{% extends "layouts/layout.html" %}
+
+{% block title %}Panel Principal - Bromatología{% endblock %}
+
+{% block content %}
+<!-- Acciones Rápidas (Zona 2 por defecto al iniciar) -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-4">
+    <h5 class="font-heading font-weight-bold text-dark mb-3">Acceso Rápido</h5>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/reclamos" class="btn text-white mr-2 mb-2" style="background-color: var(--muni-teal);">
+        <i class="fa-solid fa-list-check mr-1"></i> Ver Bandeja de Reclamos
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+    
+{% macro paginacion_anio(anio_actual, anios, base_url) %}
+
+{% if anios|length > 1 %}
+
+<style>
+    .pagination-anio .page-link {
+        color: #6c757d;
+    }
+    .pagination-anio .page-link:hover {
+        color: #495057;
+    }
+
+    .pagination-anio .page-item.active .page-link {
+        background-color: #adb5bd;
+        border-color: #adb5bd;
+        color: white;
+    }
+
+    .pagination-anio .page-link:focus {
+        box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+}
+</style>
+
+{% set indice_actual = anios.index(anio_actual) %}
+{% set ultimo_indice = anios|length - 1 %}
+
+<nav aria-label="Paginación por año">
+    <ul class="pagination pagination-anio justify-content-center">
+        {# =========================================
+           ANTERIOR
+           ========================================= #}
+        {% if indice_actual > 0 %}
+            <li class="page-item">
+                <a class="page-link" href="{{ base_url }}?anio={{ anios[indice_actual - 1] }}"> Siguiente </a>
+            </li>
+        {% endif %}
+
+        {# =========================================
+           PRIMER AÑO
+           ========================================= #}
+        {% if indice_actual > 2 %}
+            <li class="page-item"> 
+                <a class="page-link" href="{{ base_url }}?anio={{ anios[0] }}"> {{ anios[0] }} </a>
+            </li>
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+        {% endif %}
+
+        {# =========================================
+           AÑOS CERCANOS AL ACTUAL
+           ========================================= #}
+        {% for i in range(0, anios|length) %}
+            {% if i >= indice_actual - 2 and i <= indice_actual + 2 %}
+                <li class="page-item {% if i == indice_actual %}active{% endif %}">
+                    {% if i == indice_actual %}
+                        <span class="page-link"> {{ anios[i] }} </span>
+                    {% else %}
+                        <a class="page-link" href="{{ base_url }}?anio={{ anios[i] }}"> {{ anios[i] }} </a>
+                    {% endif %}
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {# =========================================
+           ÚLTIMO AÑO
+           ========================================= #}
+        {% if indice_actual < ultimo_indice - 2 %}
+            <li class="page-item disabled">
+                <span class="page-link">...</span>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="{{ base_url }}?anio={{ anios[ultimo_indice] }}"> {{ anios[ultimo_indice] }}</a>
+            </li>
+        {% endif %}
+
+        {# =========================================
+           SIGUIENTE
+           ========================================= #}
+        {% if indice_actual < ultimo_indice %}
+            <li class="page-item">
+                <a class="page-link" href="{{ base_url }}?anio={{ anios[indice_actual + 1] }}"> Anterior</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endmacro %}

@@ -1,0 +1,188 @@
+{% block modal %}
+
+<div class="modal fade" id="update_CambioContraseña" tabindex="-1" role="dialog" aria-labelledby="modalCambioContraseñaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" id="cambioContraseñaLabel"><strong>CAMBIAR CONTRASEÑA</strong></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+
+        {% if error_cambio %}
+            <div class="alert alert-danger text-center">
+                {{ error_cambio }}
+            </div>
+        {% endif %}
+
+       
+            <div class="form-group">
+                <label><strong>USUARIO *</strong></label>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                    </div>
+                    <input type="text" class="form-control" name="usuarioMod" id="usuarioMod" value="{{ usuario_cambio | default('') }}" oninput="this.value=this.value.toUpperCase()" required>
+                </div>
+            </div>
+
+            <div class="form-group mt-2">
+                <label><strong>CONTRASEÑA ACTUAL *</strong></label>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                    </div>
+                    <input type="password" class="form-control" name="clave_actual" id="clave_actual" value="{{ clave_actual | default('') }}" oninput="this.value=this.value.toUpperCase()" required>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('clave_actual', this)">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+                    </div>
+                    
+                </div>
+
+                
+            <div class="form-group mt-2">
+                <label><strong>NUEVA CONTRASEÑA *</strong></label>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                    </div>
+                    <input type="password" class="form-control" name="clave_nueva" id="clave_nueva" value="{{clave_nueva | default('') }}" oninput="this.value=this.value.toUpperCase()" required>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('clave_nueva', this)">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mt-2">
+                <label><strong>REPETIR NUEVA CONTRASEÑA *</strong></label>
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                    </div>
+                    <input type="password" class="form-control" name="clave_repetir" id="clave_repetir"  value="{{ clave_repetir | default('') }}" oninput="this.value=this.value.toUpperCase()" required>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('clave_repetir', this)">
+                            <i class="bi bi-eye-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group mt-2">
+                <label><strong>CAPTCHA *</strong></label>
+
+                <div class="input-group align-items-center">
+                    <input type="text" class="form-control" name="captcha_cambio" id="captcha_cambio" placeholder="Ingrese el código" required>
+
+                    <div class="captcha-box ml-2 px-3 py-2" id="captcha-text-cambio">
+                        {{ captcha }}
+                    </div>
+
+                    <div class="input-group-append">
+                        <a href="javascript:void(0)" class="btn btn-outline-primary" onclick="recargarCaptchaCambio()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </button>
+
+                <button type="button" class="acepta btn btn-success py-2 font-weight-bold" id="modificar_Contraseña">
+                    <i class="bi bi-key-fill"></i> Cambiar contraseña
+                </button>
+            </div>
+
+       
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const icon = btn.querySelector("i");
+
+        if (!input) return;
+
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.remove("bi-eye-fill");
+            icon.classList.add("bi-eye-slash-fill");
+        } else {
+            input.type = "password";
+            icon.classList.remove("bi-eye-slash-fill");
+            icon.classList.add("bi-eye-fill");
+        }
+    }
+
+    function recargarCaptchaCambio() {
+        fetch("/captcha-refresh")
+            .then(response => response.json())
+            .then(data => {
+                const box = document.getElementById("captcha-text-cambio");
+                if (box) {
+                    box.textContent = data.captcha;
+                }
+            })
+            .catch(err => console.error("Error recargando captcha cambio", err));
+    }
+
+    document.getElementById('modificar_Contraseña').addEventListener('click', async function(e) {
+        e.preventDefault();
+
+        const usuarioMod    = document.getElementById('usuarioMod').value;
+        const clave_actual  = document.getElementById('clave_actual').value;
+        const clave_nueva   = document.getElementById('clave_nueva').value;
+        const clave_repetir = document.getElementById('clave_repetir').value;
+        const captcha_cambio = document.getElementById('captcha_cambio').value;
+
+        try {
+            if (clave_nueva != clave_repetir){
+                    alert("Las nuevas contraseñas no coinciden");
+                    return;
+            }       
+
+
+            const response = await fetch(`/cambiar-clave`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    usuarioMod: usuarioMod,
+                    clave_actual: clave_actual,
+                    clave_nueva: clave_nueva,
+                    clave_repetir: clave_repetir,
+                    captcha_cambio: captcha_cambio
+                })
+            });
+
+            if (response.ok) {
+                alert('Contraseña cambiada correctamente. Ya puede iniciar sesión.');
+                $('#update_CambioContraseña').modal('hide');
+                location.reload();
+            } else {
+                const error = await response.json();
+                alert('Error al cambiar contraseña: ' + (error.error || 'Error desconocido'));
+            }
+
+        } catch (err) {
+            alert('Error de red o del servidor: ' + err.message);
+        }
+    });
+</script>
+
+{% endblock modal %}

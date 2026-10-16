@@ -1,0 +1,90 @@
+
+<!-- templates/layouts/header.html -->
+<aside class="app-sidebar" id="sidebar">
+
+<!-- Encabezado Institucional -->
+<div class="brand p-3 text-center d-flex flex-column align-items-center">
+  <!-- Contenedor del logo circular centrado -->
+  <div class="rounded-circle bg-white d-flex align-items-center justify-content-center shadow-sm mb-2" 
+       style="width: 52px; height: 52px; flex-shrink: 0; padding: 4px; border: 2px solid rgba(255,255,255,0.15);">
+    <img src="/static/imagenes/logoBromato.jpg" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 50%;">
+  </div>
+  
+  <!-- Textos institucionales centrados -->
+  <div style="line-height: 1.25; width: 100%;">
+    <span class="d-block text-uppercase font-weight-bold" 
+          style="color: var(--muni-magenta); font-size: 0.65rem; letter-spacing: 0.05em; white-space: normal;">
+      Municipalidad de 9 de Julio
+    </span>
+    <span class="font-heading text-white font-weight-bold d-block mt-1" 
+          style="font-size: 1rem; letter-spacing: 0.04em;">
+      BROMATOLOGÍA
+    </span>
+    <small class="text-muted d-block mt-1" style="font-size: 0.68rem;">
+      Control &amp; Fiscalización
+    </small>
+  </div>
+</div>
+
+  <!-- Menú de Enlaces Lateral -->
+  <nav class="menu-list">
+    <div class="sidebar-title">Gestión Principal</div>
+
+    <a href="/indexPpal" class="sidebar-link {% if request.url.path == '/indexPpal' %}active{% endif %}">
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Panel Principal</span>
+    </a>
+
+    <a href="/reclamos" class="sidebar-link {% if request.url.path.startswith('/reclamos') %}active{% endif %}">
+      <i class="fa-solid fa-clipboard-list"></i>
+      <span>Reclamos</span>
+    </a>
+  
+
+    <div class="sidebar-title mt-2">Tablas</div>
+
+    <a href="/inspectores" class="sidebar-link {% if request.url.path.startswith('/inspectores') %}active{% endif %}">
+      <i class="fa-solid fa-user-shield"></i>
+      <span>Inspectores</span>
+    </a>
+
+    <a href="/categorias" class="sidebar-link {% if request.url.path.startswith('/categorias') %}active{% endif %}">
+      <i class="fa-solid fa-tags"></i>
+      <span>Categorías</span>
+    </a>
+
+    <a href="/localidades" class="sidebar-link {% if request.url.path.startswith('/localidades') %}active{% endif %}">
+      <i class="fa-solid fa-map-marked-alt"></i>
+      <span>Localidades</span>
+    </a>
+
+    <div class="sidebar-title mt-2">Vecinos</div>
+
+    <a href="/reclamoVecino" target="_blank" class="sidebar-link">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      <span>Formulario Web</span>
+    </a>
+  </nav>
+
+  <!-- Usuario y Salida -->
+  <div class="p-3" style="background-color: #0f172a; border-top: 1px solid rgba(255,255,255,0.08);">
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center text-truncate mr-2">
+        <div class="rounded-circle d-flex align-items-center justify-content-center text-white font-weight-bold mr-2" 
+             style="width: 32px; height: 32px; background-color: var(--muni-magenta); font-size: 0.8rem; flex-shrink: 0;">
+          {{ request.session.user[0] | upper if request.session.get("user") else 'U' }}
+        </div>
+        <div class="text-truncate" style="line-height: 1.2;">
+          <span class="d-block text-white font-weight-bold text-truncate" style="font-size: 0.78rem;">
+            {{ request.session.get("user") }}
+          </span>
+          <small class="text-muted" style="font-size: 0.65rem;">Personal Autorizado</small>
+        </div>
+      </div>
+      <a href="/logout" class="text-danger p-1" title="Cerrar Sesión">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </a>
+    </div>
+  </div>
+
+</aside>

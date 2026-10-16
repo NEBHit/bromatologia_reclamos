@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="keywords" content="9 de Julio, Bromatología, Reclamos, Fiscalización" />
+    <meta name="description" content="Sistema de Gestión de Reclamos - Dirección de Bromatología" />
+ 
+    <title>{% block title %}BROMATOLOGÍA - Municipalidad de 9 de Julio{% endblock %}</title>
+    <link rel="icon" type="image/png" href="/static/imagenes/favicon-16x16.png" sizes="16x16">
+        
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 4.3 & Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Scripts base -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"></script> 
+       
+    <script type="text/javascript" src="/static/js/app.js"></script> 
+    <script type="text/javascript" src="/static/js/funciones.js"></script>    
+
+    <!-- Hoja de Estilos General del Sistema -->
+    <link rel="stylesheet" href="/static/css/estilos.css">
+    
+    
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+
+{% if request.session.get("user") %}
+  <!-- VISTA AUTENTICADA: CON MENÚ LATERAL IZQUIERDO -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- Sidebar Izquierdo -->
+  {% include "layouts/header.html" %}
+
+  <!-- Contenedor Principal -->
+  <div class="main-panel">
+    <main class="main-body">
+
+      <!-- ========================================================= -->
+      <!-- ZONA 1: PERMANENTE Y FIJA (HERO BANNER + TARJETAS DE ESTADO) -->
+      <!-- ========================================================= -->
+      <div class="position-relative overflow-hidden p-4 mb-4 rounded shadow-sm text-white" style="
+          background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.70) 100%), 
+                      url('/static/imagenes/fondo.jpg') center/cover no-repeat;
+          border-bottom: 3px solid var(--muni-teal);
+      ">
+        <div class="row align-items-center py-2 px-2">
+          <div class="col-md-8">
+            <span class="badge mb-2 px-3 py-1 font-weight-normal text-uppercase" style="background-color: var(--muni-magenta); letter-spacing: 0.5px;">Gestión Bromatológica</span>
+            <h3 class="font-heading font-weight-bold mb-1">Panel de Control Operativo</h3>
+            <p class="text-light mb-0 small opacity-75">Monitoreo en tiempo real de inspecciones, denuncias y resoluciones técnicas.</p>
+          </div>
+          <div class="col-md-4 text-md-right mt-3 mt-md-0">
+            <span class="text-white-50 small"><i class="fa-regular fa-clock mr-1"></i> Estado del Servicio: <strong>Activo</strong></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjetas de Resumen Operativo -->
+      <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+          <div class="card border-0 shadow-sm rounded">
+            <div class="card-body" style="border-left: 4px solid var(--muni-magenta);">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="text-muted small text-uppercase font-weight-bold">Reclamos Recibidos</div>
+                  <div class="h4 font-heading font-weight-bold mb-0 text-dark">{{ metricas.recibidos if metricas else '--' }}</div>
+                </div>
+                <div class="text-muted">
+                  <i class="fa-solid fa-inbox fa-2x" style="color: var(--muni-magenta);"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+          <div class="card border-0 shadow-sm rounded">
+            <div class="card-body" style="border-left: 4px solid #f59e0b;">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="text-muted small text-uppercase font-weight-bold">En Evaluación</div>
+                  <div class="h4 font-heading font-weight-bold mb-0 text-dark">{{ metricas.evaluacion if metricas else '--' }}</div>
+                </div>
+                <div>
+                  <i class="fa-solid fa-magnifying-glass fa-2x text-warning"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+          <div class="card border-0 shadow-sm rounded">
+            <div class="card-body" style="border-left: 4px solid var(--muni-teal);">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="text-muted small text-uppercase font-weight-bold">En Inspección</div>
+                  <div class="h4 font-heading font-weight-bold mb-0 text-dark">{{ metricas.inspeccion if metricas else '--' }}</div>
+                </div>
+                <div>
+                  <i class="fa-solid fa-motorcycle fa-2x" style="color: var(--muni-teal);"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+          <div class="card border-0 shadow-sm rounded">
+            <div class="card-body" style="border-left: 4px solid var(--muni-slate);">
+              <div class="d-flex align-items-center justify-content-between">
+                <div>
+                  <div class="text-muted small text-uppercase font-weight-bold">Resueltos</div>
+                  <div class="h4 font-heading font-weight-bold mb-0 text-dark">{{ metricas.resueltos if metricas else '--' }}</div>
+                </div>
+                <div>
+                  <i class="fa-solid fa-circle-check fa-2x" style="color: var(--muni-slate);"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- ZONA 2: DINÁMICA (AQUÍ SE INYECTA LA VISTA O TABLA SELECCIONADA) -->
+      <!-- ========================================================= -->
+      <section id="zona-dinamica">
+        {% block content %}{% endblock %}
+      </section>
+
+    </main>
+
+    {% include "layouts/footer.html" %}
+  </div>
+
+  <script>
+    $('#toggleSidebar, #sidebarOverlay').on('click', function() {
+      $('#sidebar').toggleClass('show');
+      $('#sidebarOverlay').toggleClass('show');
+    });
+  </script>
+
+{% else %}
+  <!-- VISTA NO AUTENTICADA (LOGIN) -->
+  <main class="container">
+    {% block contentLogin %}{% endblock %}
+    {% block contentSinLogin %}{% endblock %}
+  </main>
+  {% include "layouts/footer.html" %}
+{% endif %}
+
+</body>
+</html>

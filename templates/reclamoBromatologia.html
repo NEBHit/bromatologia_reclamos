@@ -1,0 +1,1287 @@
+<!-- templates/reclamoBromatologia.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formulario de Denuncias - Oficina de Bromatología | Municipalidad de 9 de Julio</title>
+  
+  <!-- Google Fonts: Montserrat & Open Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet CSS for Map Selector -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            muni: {
+              magenta: '#be1574',
+              magentaDark: '#9e0f5f',
+              magentaLight: '#fbe4f0',
+              teal: '#00897b',
+              tealHover: '#00796b',
+              tealLight: '#e0f2f1',
+              slate: '#546e7a',
+              slateHover: '#455a64',
+              border: '#cfd8dc',
+              bgLight: '#f8fafc'
+            }
+          },
+          fontFamily: {
+            sans: ['Open Sans', 'sans-serif'],
+            heading: ['Montserrat', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      color: #333333;
+      background-color: #ffffff;
+    }
+    
+    .section-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #263238;
+      padding-bottom: 0.5rem;
+      position: relative;
+      margin-bottom: 1.25rem;
+    }
+    
+    .section-title::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      height: 3px;
+      background-color: #00897b;
+      border-radius: 1px;
+    }
+
+    .muni-input {
+      border: 1px solid #cfd8dc;
+      border-radius: 4px;
+      padding: 0.55rem 0.75rem;
+      font-size: 0.925rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      background-color: #ffffff;
+      width: 100%;
+      color: #374151;
+    }
+    .muni-input:focus {
+      outline: none;
+      border-color: #00897b;
+      box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.12);
+    }
+    .muni-input.input-error {
+      border-color: #ef4444 !important;
+      background-color: #fef2f2;
+    }
+    
+    .custom-checkbox {
+      accent-color: #00897b;
+      width: 1.15rem;
+      height: 1.15rem;
+      cursor: pointer;
+    }
+    
+    .custom-radio {
+      accent-color: #be1574;
+      width: 1.15rem;
+      height: 1.15rem;
+      cursor: pointer;
+    }
+
+    #leafletMap {
+      height: 240px;
+      border-radius: 4px;
+      z-index: 10;
+    }
+
+    .modal-backdrop {
+      background-color: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(2px);
+    }
+
+    #btnBackToTop {
+      background-color: #be1574;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+    #btnBackToTop:hover {
+      background-color: #9e0f5f;
+      transform: translateY(-2px);
+    }
+
+    @media print {
+      body * { visibility: hidden; }
+      #printableReceipt, #printableReceipt * { visibility: visible; }
+      #printableReceipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+
+<body class="min-h-screen py-6 sm:py-10 px-3 sm:px-6">
+
+  <main class="max-w-4xl mx-auto">
+    
+    <div class="mb-8 border-b border-gray-200 pb-5">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-muni-magenta block mb-1">
+            Municipalidad de 9 de Julio &middot; Dirección General de Bromatología
+          </span>
+          <h1 class="text-2xl sm:text-3xl font-extrabold font-heading text-gray-800">
+            Formulario de Reclamo
+          </h1>
+          <p class="text-xs sm:text-sm text-gray-600 mt-1">
+            Control higiénico-sanitario y fiscalización en comercios y manipuladores de alimentos
+          </p>
+        </div>
+        <div class="hidden sm:flex flex-col items-end">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-muni-teal border border-teal-200">
+            <i class="fa-solid fa-file-signature"></i>
+            Trámite Oficial Bromatológico
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM START -->
+    <form id="complaintForm" action="/reclamos/reclamoVecino" method="POST" enctype="multipart/form-data" class="space-y-9" novalidate>
+
+      <input type="hidden" name="form_token" value="{{ form_token }}">
+
+      <!-- SECCIÓN 1: DATOS DEL COMERCIO -->
+      <section>
+        <h2 class="section-title">Datos del Comercio</h2>
+        
+        <div class="space-y-4">
+          <div>
+            <label for="comercioNombre" class="block text-sm font-bold text-gray-800 mb-1">
+              Nombre de fantasía / Razón Social <span class="text-red-600"></span>
+            </label>
+            <input type="text" id="comercioNombre" name="comercioNombre"  
+              placeholder="Ej: Rotisería La Estación, Supermercado El Trébol, etc."
+              class="muni-input"
+            >
+            <span class="text-xs text-red-600 hidden mt-1" id="errorTradeName">Por favor ingrese el nombre del comercio denunciado.</span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Localidad del Partido (Desde Base de Datos) -->
+            <div>
+              <label for="idLocalidad" class="block text-sm font-bold text-gray-800 mb-1">
+                Localidad/Partido <span class="text-red-600">*</span>
+              </label>
+              <select id="idLocalidad" name="idLocalidad" class="muni-input bg-white" required>
+                <option value="">-- Seleccionar localidad --</option>
+                {% for loc in localidades %}
+                  <option value="{{ loc.idLocalidad }}">{{ loc.nombre }}</option>
+                {% endfor %}
+              </select>
+              <span class="text-xs text-red-600 hidden mt-1" id="errorLocality">Seleccione la localidad.</span>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+                <label for="calle" class="block text-sm font-bold text-gray-800 mb-1">
+                     Dirección exacta <span class="text-red-600">*</span>
+                </label>
+                <input type="text" id="calle" name="calle"  required 
+                    placeholder="Calle, altura catastral o cruce de calles (Ej: Av. Mitre 1240 / Robbio esq. Libertad)" 
+                    class="muni-input"
+                >
+                <span class="text-xs text-red-600 hidden mt-1" id="errorAddress">Indique la dirección exacta o referencias precisas.</span>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <!-- Teléfono solo numérico (5 columnas) -->
+            <div class="md:col-span-5">
+                <label class="block text-sm font-bold text-gray-800 mb-1">
+                    Teléfono del Comercio <span class="text-xs font-normal text-gray-500">(Opcional)</span>
+                </label>
+                <div class="flex gap-2">
+                    <input type="number" 
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        id="areaCelComercio" 
+                        name="areaCelComercio" 
+                        placeholder="Área (2317)" 
+                        maxlength="5"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        class="muni-input w-28 flex-shrink-0"
+                    >
+                    <input type="number" 
+                        inputmode="numeric"
+                        pattern="[0-9]*"
+                        id="nroCelComercio" 
+                        name="nroCelComercio" 
+                        placeholder="Nro. sin 15" 
+                        maxlength="9"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                        class="muni-input flex-1 min-w-0"
+                    >
+                </div>
+            </div>
+
+            <!-- Horario de atención con selectores de hora (7 columnas) -->
+            <div class="md:col-span-7">
+                <label class="block text-sm font-bold text-gray-800 mb-1">
+                    Horario de atención <span class="text-xs font-normal text-gray-500">(Apertura / Cierre)</span>
+                </label>
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 flex-1">
+                        <span class="text-xs text-gray-500 font-semibold">De:</span>
+                        <input type="time" id="horaAperturaComercio" name="horaAperturaComercio" 
+                            class="muni-input text-sm py-1.5 cursor-pointer"
+                        >
+                    </div>
+                    <div class="flex items-center gap-1.5 flex-1">
+                        <span class="text-xs text-gray-500 font-semibold">A:</span>
+                        <input type="time"  id="horaCierreComercio"  name="horaCierreComercio" 
+                            class="muni-input text-sm py-1.5 cursor-pointer"
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+
+          <!-- Ubicación en Mapa (Lat/Long) -->
+          <div class="bg-gray-50 p-3.5 rounded border border-gray-200 mt-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+              <div>
+                <span class="text-xs sm:text-sm font-bold text-gray-800">
+                  <i class="fa-solid fa-map-location-dot text-muni-teal mr-1"></i> Ubicación en mapa (lat/long) - Respaldo
+                </span>
+                <span class="text-[11px] text-gray-500 block">Especialmente útil si es un puesto ambulante, feria o no se cuenta con altura catastral.</span>
+              </div>
+              <button 
+                type="button" 
+                id="btnLocateMe"
+                class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1.5 bg-white border border-muni-teal text-muni-teal hover:bg-teal-50 rounded transition shadow-sm self-start sm:self-auto"
+              >
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span>Mi ubicación actual</span>
+              </button>
+            </div>
+
+            <div id="leafletMap" class="border border-gray-300" style="height: 260px; width: 100%; min-height: 260px; z-index: 1;"></div>
+
+            <div class="grid grid-cols-2 gap-3 mt-2">
+              <div>
+                <span class="text-[11px] text-gray-600 font-semibold block mb-0.5">Latitud:</span>
+                <input type="text" id="latitud" name="latitud" placeholder="-35.4445" readonly class="muni-input text-xs font-mono bg-gray-100 py-1">
+              </div>
+              <div>
+                <span class="text-[11px] text-gray-600 font-semibold block mb-0.5">Longitud:</span>
+                <input type="text" id="longitud" name="longitud" placeholder="-60.8842" readonly class="muni-input text-xs font-mono bg-gray-100 py-1">
+              </div>
+            </div>
+            <p class="text-[11px] text-gray-400 mt-1 italic">Haga clic sobre el mapa para ajustar el marcador exacto.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 2: CATEGORÍA DEL RECLAMO -->
+      <section>
+        <h2 class="section-title">Categoría del Reclamo *</h2>
+        <p class="text-xs text-gray-600 mb-3 font-semibold">
+          Seleccione una o varias opciones que describan la irregularidad observada: <span class="text-red-600">*</span>
+        </p>
+
+        <!-- Categorías desde Base de Datos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5" id="claimCategoriesGrid">
+          {% for cat in categorias %}
+            <label class="flex items-start gap-2.5 p-2.5 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer text-xs sm:text-sm">
+              <input 
+                type="checkbox" 
+                name="idCategoria" 
+                value="{{ cat.idCategoria }}" 
+                data-nombre="{{ cat.nombre | lower }}"
+                data-requieredetalle="{{ cat.requiereDetalle }}"
+                class="custom-radio mt-0.5"
+                onchange="evaluarCategoria(this)"
+              >
+              <span class="text-gray-800 font-medium">{{ cat.nombre }}</span>
+            </label>
+          {% endfor %}
+        </div>
+
+        <!-- Subcampo si requiere detalle o es "Otros" -->
+        <div id="otherCategoryWrapper" class="hidden mt-3 p-3 bg-gray-50 border border-gray-300 rounded">
+          <label for="categoriaDetalle" class="block text-xs font-bold text-gray-800 mb-1">
+            Especifique el motivo particular del reclamo: <span class="text-red-600">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="categoriaDetalle" 
+            name="categoriaDetalle" 
+            placeholder="Detalle la situación observada..." 
+            class="muni-input text-xs sm:text-sm"
+          >
+          <span class="text-xs text-red-600 hidden mt-1" id="errorOtherDetail">Debe especificar el motivo complementario.</span>
+        </div>
+
+        <span class="text-xs text-red-600 hidden mt-2 block" id="errorCategories">Debe seleccionar una categoría de reclamo.</span>
+      
+      <!-- PANEL DINÁMICO CONDICIONAL: ALIMENTO VENCIDO O EN MAL ESTADO -->
+        <div id="panelAlimento" class="hidden mt-4 p-4 bg-amber-50/70 border-2 border-amber-300 rounded space-y-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+            <i class="fa-solid fa-utensils text-amber-700"></i> Detalle Específico del Producto / Alimento
+          </div>
+
+          <!-- Nombre y Marca -->
+          <div>
+            <label for="productoNombreMarca" class="block text-sm font-bold text-gray-800 mb-1">
+              Nombre y marca del producto
+            </label>
+            <input 
+              type="text" 
+              id="productoNombreMarca" 
+              name="productoNombreMarca" 
+              placeholder="Ej: Yogur bebible frutilla La Serenísima, 1 litro" 
+              class="muni-input"
+            >
+          </div>
+
+          <!-- Fecha de Vencimiento y Nro de Lote -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="fechaVencimiento" class="block text-sm font-bold text-gray-800 mb-1">
+                Fecha de vencimiento impresa
+              </label>
+              <input 
+                type="date" 
+                id="fechaVencimiento" 
+                name="fechaVencimiento" 
+                class="muni-input"
+              >
+            </div>
+            <div>
+              <label for="nroLote" class="block text-sm font-bold text-gray-800 mb-1">
+                N° de lote
+              </label>
+              <input 
+                type="text" 
+                id="nroLote" 
+                name="nroLote" 
+                placeholder="Ej: L-4589 B2" 
+                class="muni-input"
+              >
+            </div>
+          </div>
+
+          <!-- Estado de Conservación y Almacenamiento -->
+          <div>
+            <label for="estadoConservacion" class="block text-sm font-bold text-gray-800 mb-1">
+              Estado de conservación y almacenamiento
+            </label>
+            <textarea 
+              id="estadoConservacion" 
+              name="estadoConservacion" 
+              rows="3" 
+              placeholder="Describa el estado de conservación..." 
+              class="muni-input"
+            ></textarea>
+            <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+              Indique cómo se encontraba almacenado o exhibido el producto al momento de la compra. Si requería refrigeración, especifique si se encontraba en una góndola o equipo de frío y, de ser posible, si la temperatura de conservación era adecuada.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 3: DETALLE DEL HECHO -->
+      <section>
+        <h2 class="section-title">Detalle del Hecho</h2>
+
+        <div class="space-y-4">
+            <!-- Banner / Checkbox de Prioridad: Riesgo Inmediato -->
+            <div class="p-3.5 rounded border-2 border-amber-300 bg-amber-50/80">
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input type="checkbox" id="prioridad" name="prioridad" class="custom-checkbox mt-1 accent-red-600">
+                    <div>
+                        <span class="inline-flex items-center gap-1 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide mr-1.5">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Prioridad
+                        </span>
+                        <span class="text-sm font-bold text-gray-900">
+                        ¿Hay riesgo inmediato o sospecha de intoxicación en curso? <span class="text-red-600"></span>
+                        </span>
+                        <p class="text-xs text-gray-600 mt-1">
+                        Marque esta casilla si personas han manifestado síntomas clínicos agudos (vómitos, intoxicación, requerimiento médico) o si existe riesgo inminente de consumo masivo para priorizar la inspección en el día.
+                        </p>
+                    </div>
+                </label>
+            </div>
+
+            <!-- Grid: Fecha/hora y Frecuencia -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Fecha y hora del hecho -->
+                <div>
+                    <label for="incidentDateTime" class="block text-sm font-bold text-gray-800 mb-1">
+                        Fecha y hora en que ocurrió el hecho <span class="text-red-600">*</span>
+                    </label>
+                    <input 
+                        type="datetime-local" 
+                        id="fechaHoraHecho"
+                        name="fechaHoraHecho" 
+                        required 
+                        class="muni-input"
+                    >
+                    <span class="text-[11px] text-gray-500 block mt-0.5">Distinta de la fecha y hora de emisión del formulario.</span>
+                    <span class="text-xs text-red-600 hidden mt-1" id="errorIncidentDate">Indique la fecha y hora aproximada en que ocurrió.</span>
+                </div>
+
+                <!-- Frecuencia -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-800 mb-1">
+                        ¿Es un hecho reiterado o la primera vez que lo nota? *<span class="text-xs font-normal text-gray-500"></span>
+                    </label>
+                    <div class="flex flex-wrap items-center gap-4 pt-1.5">
+                        <!-- RECURRENCIAHECHO -->
+                        {% for rec in recurrencias %}
+                          <label class="flex items-start gap-2.5 p-2.5 rounded border border-gray-200 hover:bg-gray-50 cursor-pointer text-xs sm:text-sm">
+                            <input 
+                              type="radio"
+                              name="idRecurrenciaHecho" 
+                              value="{{ rec.idRecurrenciaHecho }}" 
+                              checked class="custom-radio"
+                            >
+                            <span class="text-gray-800 font-medium">{{ rec.nombre }}</span>
+                          </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Descripción del hecho -->
+            <div>
+                <label for="incidentDescription" class="block text-sm font-bold text-gray-800 mb-1">
+                     Descripción de lo sucedido (texto libre) <span class="text-red-600">*</span>
+                </label>
+                <textarea 
+                id="incidenteHecho" 
+                name="incidenteHecho" 
+                rows="4" 
+                required
+                placeholder="Describa de manera clara y detallada: alimento involucrado, anomalías (olor, color, presencia de cuerpo extraño), fechas de caducidad observadas, estado de las instalaciones, personas afectadas, etc." 
+                class="muni-input"
+                ></textarea>
+                <div class="flex justify-between items-center text-[11px] text-gray-500 mt-1">
+                    <span>Proporcione la mayor cantidad de referencias para la inspección.</span>
+                    <span id="charCounter">0 caracteres</span>
+                </div>
+                <span class="text-xs text-red-600 hidden mt-1" id="errorIncidentDesc">Por favor describa lo sucedido en el comercio.</span>
+            </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 4: EVIDENCIA -->
+      <section>
+        <h2 class="section-title">Documentación Respaldatoria</h2>
+        <p class="text-xs text-gray-700 font-semibold mb-1">
+          Adjuntar fotos / etiquetas / tickets de compra <span class="text-xs font-normal text-gray-500">(Opcional)</span>
+        </p>
+        <p class="text-xs text-gray-500 mb-3">
+          Formatos admitidos: <strong>JPG, PNG, PDF, MP4</strong>. Tamaño máximo total permitido: <strong>15 MB</strong>.
+        </p>
+
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <label class="inline-flex items-center justify-center px-4 py-2 border border-gray-400 rounded text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 cursor-pointer transition shadow-sm">
+            <span>Seleccionar archivo</span>
+            <input 
+              type="file" 
+              id="evidencias" 
+              name="evidencias" 
+              multiple 
+              accept="image/jpeg,image/png,application/pdf,video/mp4" 
+              class="hidden"
+            >
+          </label>
+          <span id="fileCountStatus" class="text-xs text-gray-600">Ningún archivo seleccionado</span>
+        </div>
+
+        <!-- Contenedor para mensajes de error de archivos -->
+        <span class="text-xs text-red-600 hidden mt-1 block" id="errorEvidencias"></span>
+
+<div id="fileListPreview" class="mt-3 space-y-2"></div>
+      </section>
+
+      <!-- SECCIÓN 5: IDENTIFICACIÓN DEL DENUNCIANTE -->
+      <section>
+        <h2 class="section-title">Identificación del Reclamante</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <label class="flex items-center gap-3 p-3 rounded border border-gray-300 cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-muni-teal has-[:checked]:bg-teal-50/30">
+            <input type="radio" name="esAnonimo" value="true" id="radioAnonima" class="custom-radio">
+            <div>
+              <span class="block text-sm font-bold text-gray-800">Reclamo Anónimo</span>
+              <span class="block text-[11px] text-gray-500">No se registran datos personales ni de contacto.</span>
+            </div>
+          </label>
+
+          <label class="flex items-center gap-3 p-3 rounded border border-gray-300 cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-muni-teal has-[:checked]:bg-teal-50/30">
+            <input type="radio" name="esAnonimo" value="false" id="radioIdentificada" class="custom-radio" checked>
+            <div>
+              <span class="block text-sm font-bold text-gray-800">Reclamo Identificado</span>
+              <span class="block text-[11px] text-gray-500">Permite dar seguimiento y recibir el resultado de la inspección.</span>
+            </div>
+          </label>
+        </div>
+
+        <div id="anonymousWarning" class="hidden p-3.5 rounded border border-amber-300 bg-amber-50 text-amber-900 text-xs sm:text-sm">
+          <div class="flex items-start gap-2.5">
+            <i class="fa-solid fa-triangle-exclamation text-amber-600 mt-0.5"></i>
+            <div>
+              <strong>Aviso sobre denuncias anónimas:</strong>
+              <p class="mt-0.5 text-xs sm:text-sm text-gray-700">
+                La Oficina de Bromatología procederá de oficio a la verificación del comercio, pero el sistema no podrá notificarle las novedades del trámite.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div id="identifiedFields" class="p-4 bg-gray-50 border border-gray-200 rounded space-y-4">
+          <div class="text-xs font-bold uppercase tracking-wider text-muni-teal">
+            <i class="fa-solid fa-user-shield mr-1"></i> Datos personales para dar seguimiento *
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="nomDenunciante" class="block text-sm font-bold text-gray-800 mb-1">
+                Nombre <span class="text-red-600">*</span>
+              </label>
+              <input type="text" id="nomDenunciante" name="nomDenunciante" placeholder="Nombre..." class="muni-input">
+              <span class="text-xs text-red-600 hidden mt-1" id="errorNomDenunciante">Indique su nombre.</span>
+            </div>
+
+            <div>
+              <label for="apeDenunciante" class="block text-sm font-bold text-gray-800 mb-1">
+                Apellido <span class="text-red-600">*</span>
+              </label>
+              <input type="text" id="apeDenunciante" name="apeDenunciante" placeholder="Apellido..." class="muni-input">
+              <span class="text-xs text-red-600 hidden mt-1" id="errorApeDenunciante">Indique su apellido.</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs sm:text-sm font-bold text-gray-800 mb-1">
+              Teléfono Celular con WhatsApp (SIN 0 Y SIN 15) <span class="text-red-600">*</span>
+            </label>
+            <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              <div class="col-span-1">
+                <input type="number" id="areaCelDenunciante" name="areaCelDenunciante" placeholder="Área (2317)" class="muni-input">
+              </div>
+              <div class="col-span-2 sm:col-span-3">
+                <input type="number" id="nroCelDenunciante" name="nroCelDenunciante" placeholder="Nro sin 15" class="muni-input">
+              </div>
+            </div>
+            <span class="text-[11px] text-gray-500 block mt-0.5">Ejemplo 9 de Julio: Área 2317 / Nro 554433</span>
+            <span class="text-xs text-red-600 hidden mt-1" id="errorClaimantPhone">Ingrese el código de área y teléfono válidos.</span>
+          </div>
+
+          <div>
+            <label for="emailDenunciante" class="block text-sm font-bold text-gray-800 mb-1">
+              Correo Electrónico de contacto para recibir notificaciones <span class="text-red-600">*</span>
+            </label>
+            <input type="email" id="emailDenunciante" name="emailDenunciante" placeholder="nombre@correo.com" class="muni-input">
+            <span class="text-xs text-red-600 hidden mt-1" id="errorClaimantEmail">Ingrese un correo electrónico válido para recibir notificaciones.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECCIÓN 6: LEGAL Y CAPTCHA -->
+      <section class="border-t border-gray-200 pt-6">
+        <div class="bg-gray-50 p-3.5 rounded border border-gray-200 mb-6">
+          <label class="flex items-start gap-2.5 cursor-pointer">
+            <input type="checkbox" id="aceptaDeclaracionJurada" name="aceptaDeclaracionJurada" value="true" checked required class="custom-checkbox mt-1">
+            <div class="text-xs sm:text-sm text-gray-700 leading-snug">
+              <strong>Declaración jurada:</strong> Declaro bajo juramento que los datos aportados en esta presentación son verídicos y fidedignos. Entiendo que esta presentación inicia formalmente el protocolo de fiscalización bromatológica<span class="text-red-600">*</span>
+            </div>
+          </label>
+          <span class="text-xs text-red-600 hidden mt-1.5 pl-6 block" id="errorLegalAffidavit">Debe aceptar la declaración jurada.</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <div>
+            <input 
+              type="text" 
+              id="captchaInput" 
+              name="captchaInput" 
+              required 
+              placeholder="Código" 
+              class="muni-input w-36 uppercase font-mono font-bold tracking-widest text-center"
+              maxlength="6"
+            >
+          </div>
+
+          <div class="border border-gray-300 rounded overflow-hidden shadow-inner flex items-center bg-blue-50">
+            <canvas id="captchaCanvas" width="130" height="40" class="select-none"></canvas>
+          </div>
+
+          <button 
+            type="button" 
+            id="btnReloadCaptcha" 
+            class="text-xs text-muni-teal hover:text-muni-tealHover underline font-semibold flex items-center gap-1"
+          >
+            <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+            <span>Recargar código</span>
+          </button>
+        </div>
+        <span class="text-xs text-red-600 hidden mt-1 block" id="errorCaptcha">Código de seguridad incorrecto.</span>
+      </section>
+
+      <!-- SECCIÓN 7: BOTONES DE ACCIÓN -->
+      <div class="pt-4 border-t border-gray-200">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
+          <button 
+            type="button" 
+            id="btnCancelForm"
+            class="w-full py-2.5 px-5 rounded text-white font-heading font-semibold text-sm bg-muni-slate hover:bg-muni-slateHover shadow-sm transition active:scale-[0.99] text-center"
+          >
+            Cancelar
+          </button>
+
+          <button 
+            type="submit" 
+            id="btnSubmit"
+            class="w-full py-2.5 px-5 rounded text-white font-heading font-semibold text-sm bg-muni-teal hover:bg-muni-tealHover shadow-sm transition active:scale-[0.99] text-center"
+          >
+            Enviar Denuncia
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </main>
+
+  <button 
+    id="btnBackToTop" 
+    class="fixed bottom-6 right-6 w-10 h-10 rounded text-white shadow-lg flex items-center justify-center opacity-0 pointer-events-none z-50 focus:outline-none"
+    title="Volver arriba"
+    aria-label="Volver arriba"
+  >
+    <i class="fa-solid fa-chevron-up text-sm"></i>
+  </button>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <script>
+    const DEFAULT_LAT = -35.4446;
+    const DEFAULT_LNG = -60.8842;
+    let map, mapMarker;
+    let currentCaptchaCode = "";
+
+    const complaintForm = document.getElementById('complaintForm');
+    const radioAnonima = document.getElementById('radioAnonima');
+    const radioIdentificada = document.getElementById('radioIdentificada');
+    const anonymousWarning = document.getElementById('anonymousWarning');
+    const identifiedFields = document.getElementById('identifiedFields');
+    const otherCategoryWrapper = document.getElementById('otherCategoryWrapper');
+    const charCounter = document.getElementById('charCounter');
+    const descripcionProblema = document.getElementById('incidenteHecho');
+    const btnLocateMe = document.getElementById('btnLocateMe');
+    const latitud = document.getElementById('latitud');
+    const longitud = document.getElementById('longitud');
+    const btnReloadCaptcha = document.getElementById('btnReloadCaptcha');
+    const captchaCanvas = document.getElementById('captchaCanvas');
+    const captchaInput = document.getElementById('captchaInput');
+    const btnCancelForm = document.getElementById('btnCancelForm');
+    const btnBackToTop = document.getElementById('btnBackToTop');
+
+    /*function generateCaptcha(len = 6) {
+      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+      let res = '';
+      for (let i = 0; i < len; i++) {
+        res += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return res;
+    }*/
+
+    function drawCaptcha(code) {
+      const ctx = captchaCanvas.getContext('2d');
+      ctx.clearRect(0, 0, captchaCanvas.width, captchaCanvas.height);
+      ctx.fillStyle = '#f0f9ff';
+      ctx.fillRect(0, 0, captchaCanvas.width, captchaCanvas.height);
+
+      for (let i = 0; i < 5; i++) {
+        ctx.strokeStyle = `rgba(0, 137, 123, 0.3)`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * captchaCanvas.width, Math.random() * captchaCanvas.height);
+        ctx.lineTo(Math.random() * captchaCanvas.width, Math.random() * captchaCanvas.height);
+        ctx.stroke();
+      }
+
+      ctx.font = 'bold 20px Montserrat, monospace';
+      ctx.textBaseline = 'middle';
+      const charWidth = (captchaCanvas.width - 20) / code.length;
+
+      for (let i = 0; i < code.length; i++) {
+        ctx.save();
+        const x = 10 + i * charWidth;
+        const y = captchaCanvas.height / 2;
+        ctx.fillStyle = (i % 2 === 0) ? '#1f2937' : '#00796b';
+        ctx.fillText(code[i], x, y);
+        ctx.restore();
+      }
+    }
+
+    async function resetCaptcha() {
+      try {
+        // Pedir el código generado en sesión al backend
+        const res = await fetch('/reclamos/captcha-code');
+        const data = await res.json();
+        currentCaptchaCode = data.codigo;
+        drawCaptcha(currentCaptchaCode);
+      } catch (error) {
+        console.error('Error al obtener captcha:', error);
+      }
+      captchaInput.value = '';
+    }
+
+    function initMap() {
+      const mapContainer = document.getElementById('leafletMap');
+      if (!mapContainer) return;
+
+      // Evita errores si se vuelve a llamar a la función
+      if (map) {
+        map.remove();
+      }
+
+      map = L.map('leafletMap', { 
+        scrollWheelZoom: false 
+      }).setView([DEFAULT_LAT, DEFAULT_LNG], 14);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>'
+      }).addTo(map);
+
+      mapMarker = L.marker([DEFAULT_LAT, DEFAULT_LNG], { 
+        draggable: true 
+      }).addTo(map);
+
+      // Carga las coordenadas iniciales por defecto en los inputs
+      setCoords(DEFAULT_LAT, DEFAULT_LNG);
+
+      mapMarker.on('dragend', function () {
+        const pos = mapMarker.getLatLng();
+        setCoords(pos.lat, pos.lng);
+      });
+
+      map.on('click', function (e) {
+        mapMarker.setLatLng(e.latlng);
+        setCoords(e.latlng.lat, e.latlng.lng);
+      });
+
+      // Permite que el DOM termine de renderizar antes de calcular dimensiones
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 200);
+    }
+   
+
+    function setCoords(lat, lng) {
+      latitud.value = lat.toFixed(6);
+      longitud.value = lng.toFixed(6);
+    }
+
+    function getGPSLocation() {
+      if (!navigator.geolocation) return;
+      btnLocateMe.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Localizando...';
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+          mapMarker.setLatLng([pos.coords.latitude, pos.coords.longitude]);
+          setCoords(pos.coords.latitude, pos.coords.longitude);
+          btnLocateMe.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Mi ubicación actual';
+        },
+        () => {
+          btnLocateMe.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Mi ubicación actual';
+        },
+        { timeout: 7000, enableHighAccuracy: true }
+      );
+    }
+
+    function toggleIdentityFields() {
+      if (radioIdentificada.checked) {
+        anonymousWarning.classList.add('hidden');
+        identifiedFields.classList.remove('hidden');
+        document.getElementById('nomDenunciante').required = true;
+        document.getElementById('apeDenunciante').required = true;
+        document.getElementById('emailDenunciante').required = true;
+      } else {
+        anonymousWarning.classList.remove('hidden');
+        identifiedFields.classList.add('hidden');
+        document.getElementById('nomDenunciante').required = false;
+        document.getElementById('apeDenunciante').required = false;
+        document.getElementById('emailDenunciante').required = false;
+      }
+    }
+    radioAnonima.addEventListener('change', toggleIdentityFields);
+    radioIdentificada.addEventListener('change', toggleIdentityFields);
+
+    function evaluarCategoria(radio) {
+      const nombre = radio.getAttribute('data-nombre');
+      const requiereDetalle = radio.getAttribute('data-requieredetalle');
+      const inputOtro = document.getElementById('categoriaDetalle');
+
+      if (requiereDetalle === 'True' || requiereDetalle === '1' || nombre.includes('otro')) {
+        otherCategoryWrapper.classList.remove('hidden');
+        inputOtro.required = true;
+      } else {
+        otherCategoryWrapper.classList.add('hidden');
+        inputOtro.required = false;
+        inputOtro.value = '';
+      }
+    }
+
+    descripcionProblema.addEventListener('input', () => {
+      charCounter.textContent = `${descripcionProblema.value.length} caracteres`;
+    });
+
+    // Función auxiliar para marcar error visual y alternar mensajes
+    function alternarError(inputId, errorId, hayError) {
+      const inputEl = document.getElementById(inputId);
+      const errorEl = document.getElementById(errorId);
+      
+      if (inputEl) {
+        if (hayError) {
+          inputEl.classList.add('input-error');
+        } else {
+          inputEl.classList.remove('input-error');
+        }
+      }
+      if (errorEl) {
+        if (hayError) {
+          errorEl.classList.remove('hidden');
+        } else {
+          errorEl.classList.add('hidden');
+        }
+      }
+    }
+
+// Función pura de validación con alerta, scroll y foco efectivo
+    function validarFormulario() {
+      // 1. Limpiar errores visuales previos
+      document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
+      document.querySelectorAll('[id^="error"]').forEach(el => el.classList.add('hidden'));
+
+      // Función auxiliar para alertar, marcar y enfocar
+      function detenerConError(mensaje, campoId, contenedorScrollId = null) {
+        // Marcar en rojo si existe input
+        const inputEl = campoId ? document.getElementById(campoId) : null;
+        if (inputEl) inputEl.classList.add('input-error');
+
+        // Mostrar cartel al usuario
+        alert(mensaje);
+
+        // Posicionar y dar foco
+        const elementoDestino = inputEl || (contenedorScrollId ? document.getElementById(contenedorScrollId) : null);
+        if (elementoDestino) {
+          elementoDestino.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          if (inputEl && typeof inputEl.focus === 'function') {
+            setTimeout(() => inputEl.focus(), 80);
+          }
+        }
+        return false;
+      }
+
+      // 1. Localidad
+      const idLocalidad = document.getElementById('idLocalidad');
+      if (!idLocalidad.value) {
+        return detenerConError("La Localidad del Comercio es de ingreso obligatorio.", 'idLocalidad');
+      }
+
+      // 2. Dirección exacta
+      const calle = document.getElementById('calle');
+      if (!calle.value.trim()) {
+        return detenerConError("La Dirección del Comercio es de ingreso obligatorio.", 'calle');
+      }
+
+      // 3. Categorías de reclamo
+      const checkboxes = document.querySelectorAll('input[name="idCategoria"]:checked');
+      if (checkboxes.length === 0) {
+        return detenerConError("Debe seleccionar al menos una Categoría de reclamo.", null, 'claimCategoriesGrid');
+      }
+
+      // Detalle si la categoría elegida lo requiere
+      const requiereDetalle = Array.from(checkboxes).some(
+        cb => cb.getAttribute('data-requieredetalle') === 'True' || 
+              cb.getAttribute('data-requieredetalle') === '1' || 
+              cb.getAttribute('data-nombre').includes('otro')                
+      );
+      const inputOtro = document.getElementById('categoriaDetalle');
+      if (requiereDetalle && !inputOtro.value.trim()) {
+        return detenerConError("Para la categoría seleccionada debe especificar el motivo particular del reclamo.", 'categoriaDetalle');
+      }
+
+      // 4. Fecha y hora del hecho
+      const fechaHoraHecho = document.getElementById('fechaHoraHecho');
+      if (!fechaHoraHecho.value) {
+        return detenerConError("La Fecha y Hora en que ocurrió el hecho es de ingreso obligatorio.", 'fechaHoraHecho');
+      }
+
+      // 5. Descripción del hecho
+      const incidenteHecho = document.getElementById('incidenteHecho');
+      if (!incidenteHecho.value.trim()) {
+        return detenerConError("La Descripción de lo sucedido es de ingreso obligatorio.", 'incidenteHecho');
+      }
+
+      // 6. Datos si es Denuncia Identificada
+      if (radioIdentificada.checked) {
+        const nomDenunciante = document.getElementById('nomDenunciante');
+        if (!nomDenunciante.value.trim()) {
+          return detenerConError("El Nombre de la persona que reclama es de ingreso obligatorio.", 'nomDenunciante');
+        }
+
+        const apeDenunciante = document.getElementById('apeDenunciante');
+        if (!apeDenunciante.value.trim()) {
+          return detenerConError("El Apellido de la persona que reclama es de ingreso obligatorio.", 'apeDenunciante');
+        }
+
+        const areaCel = document.getElementById('areaCelDenunciante');
+        const nroCel = document.getElementById('nroCelDenunciante');
+        if (!areaCel.value.trim() || !nroCel.value.trim()) {
+          return detenerConError("El Teléfono Celular de la persona que reclama es de ingreso obligatorio.", 'areaCelDenunciante');
+        }
+
+        const email = document.getElementById('emailDenunciante');
+        if (!email.value.trim() || !email.value.includes('@')) {
+          return detenerConError("El E-Mail de contacto ingresado no es válido o está incompleto.", 'emailDenunciante');
+        }
+      }
+
+      // 7. Declaración Jurada
+      const aceptaDJ = document.getElementById('aceptaDeclaracionJurada');
+      if (!aceptaDJ.checked) {
+        return detenerConError("Debe aceptar la Declaración Jurada para poder registrar el reclamo.", 'aceptaDeclaracionJurada');
+      }
+
+      // 8. Captcha
+      const captchaInput = document.getElementById('captchaInput');
+      if (!captchaInput.value.trim()) {
+        return detenerConError("Debe ingresar el código de seguridad (Captcha).", 'captchaInput');
+      }
+
+      return true;
+    }
+
+    function evaluarCategoria(radio) {
+      // 1. Mostrar/ocultar campo de detalle para "Otros" o si requiereDetalle
+      const nombre = (radio.getAttribute('data-nombre') || '').toLowerCase();
+      const requiereDetalle = radio.getAttribute('data-requieredetalle');
+      const inputOtro = document.getElementById('categoriaDetalle');
+
+      if (requiereDetalle === 'True' || requiereDetalle === '1' || nombre.includes('otro')) {
+        otherCategoryWrapper.classList.remove('hidden');
+        inputOtro.required = true;
+      } else {
+        // Si se desmarcó y no hay otro checkbox marcado que requiera detalle, se oculta
+        const algunRequiere = Array.from(document.querySelectorAll('input[name="idCategoria"]:checked')).some(cb => {
+          const n = (cb.getAttribute('data-nombre') || '').toLowerCase();
+          const r = cb.getAttribute('data-requieredetalle');
+          return r === 'True' || r === '1' || n.includes('otro');
+        });
+        if (!algunRequiere) {
+          otherCategoryWrapper.classList.add('hidden');
+          inputOtro.required = false;
+          inputOtro.value = '';
+        }
+      }
+
+      // 2. Mostrar/ocultar el panel de Alimento Vencido (#panelAlimento)
+      const panelAlimento = document.getElementById('panelAlimento');
+      const categoriasSeleccionadas = document.querySelectorAll('input[name="idCategoria"]:checked');
+
+      // Verifica si alguno de los checkboxes marcados contiene "vencido" o "alimento"
+      const esAlimentoVencido = Array.from(categoriasSeleccionadas).some(cb => {
+        const catNombre = (cb.getAttribute('data-nombre') || '').toLowerCase();
+        return catNombre.includes('vencido') || catNombre.includes('alimento');
+      });
+
+      if (esAlimentoVencido) {
+        panelAlimento.classList.remove('hidden');
+      } else {
+        panelAlimento.classList.add('hidden');
+        // Opcional: limpiar los valores al ocultar el panel
+        document.getElementById('productoNombreMarca').value = '';
+        document.getElementById('fechaVencimiento').value = '';
+        document.getElementById('nroLote').value = '';
+        document.getElementById('estadoConservacion').value = '';
+      }
+    }
+
+    complaintForm.addEventListener('submit', async function (e) {
+          e.preventDefault(); // Evitamos el submit tradicional para procesar con FormData y fetch
+
+          // Validar datos formulario (obligatoriedad)
+          if (!validarFormulario()) {
+            return; 
+          }
+
+          // Obtener las categorías seleccionadas
+          const checkboxes = document.querySelectorAll('input[name="idCategoria"]:checked');
+          if (checkboxes.length === 0) {
+            const errorCategories = document.getElementById('errorCategories');
+            if (errorCategories) errorCategories.classList.remove('hidden');
+            alert("Debe seleccionar al menos una Categoría de reclamo.");
+            return;
+          }
+
+          // Armar array de categorías integrando el detalle general o los datos del alimento
+          const categoriasSeleccionadas = Array.from(checkboxes).map(cb => {
+            const nombre = (cb.getAttribute('data-nombre') || '').toLowerCase();
+            const requiereDetalle = cb.getAttribute('data-requieredetalle') === 'True' || cb.getAttribute('data-requieredetalle') === '1';
+            let detalle = null;
+
+            // Si la categoría refiere a alimentos vencidos o en mal estado, recolecta la ficha del producto
+            if (nombre.includes('vencido') || nombre.includes('alimento')) {
+              const prod = document.getElementById('productoNombreMarca')?.value.trim();
+              const venc = document.getElementById('fechaVencimiento')?.value.trim();
+              const lote = document.getElementById('nroLote')?.value.trim();
+              const cons = document.getElementById('estadoConservacion')?.value.trim();
+
+              const partes = [];
+              if (prod) partes.push(`Producto/Marca: ${prod}`);
+              if (venc) partes.push(`Vencimiento: ${venc}`);
+              if (lote) partes.push(`Lote: ${lote}`);
+              if (cons) partes.push(`Conservación: ${cons}`);
+
+              detalle = partes.length > 0 ? partes.join(" | ") : null;
+
+            // Si es una categoría que requiere detalle complementario o es "Otros"
+            } else if (requiereDetalle || nombre.includes('otro')) {
+              detalle = document.getElementById('categoriaDetalle')?.value.trim() || null;
+            }
+
+            return {
+              idCategoria: parseInt(cb.value),
+              nombre: cb.getAttribute('data-nombre'),
+              detalle: detalle
+            };
+          });
+
+          // Armar el FormData
+          const formData = new FormData(complaintForm);
+
+          // Eliminar los checkboxes sueltos del payload
+          formData.delete('idCategoria');
+
+          // Agregar el JSON serializado con los datos completos y estructurados
+          formData.append('categoriasJson', JSON.stringify(categoriasSeleccionadas));
+
+          // Modificar Estado visual del botón durante el envío
+          const btnSubmit = document.getElementById('btnSubmit');
+          btnSubmit.disabled = true;
+          btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Procesando denuncia...';
+
+          // Envíar asíncrono al backend
+          try {
+            const response = await fetch(complaintForm.action, {
+              method: 'POST',
+              body: formData
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (response.ok && data?.status === 'ok') {
+              // Redirigir a la vista de confirmación
+              window.location.replace(data.redirect || `/reclamos/exito?expte=${data.nroExpediente}`);
+            } else {
+              alert(data?.detail || 'Ocurrió un error al registrar la denuncia.');
+              btnSubmit.disabled = false;
+              btnSubmit.innerHTML = 'Enviar Denuncia';
+            }
+          } catch (error) {
+            console.error('Error al enviar:', error);
+            alert('Error de conexión con el servidor. Intente nuevamente.');
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = 'Enviar Denuncia';
+          }
+    });
+
+    btnReloadCaptcha.addEventListener('click', resetCaptcha);
+    btnLocateMe.addEventListener('click', getGPSLocation);
+    btnCancelForm.addEventListener('click', () => {
+      complaintForm.reset();
+      window.location.href = '/indexPpal';
+    });
+
+    window.addEventListener('scroll', () => {
+      if (window.pageYOffset > 250) {
+        btnBackToTop.classList.remove('opacity-0', 'pointer-events-none');
+        btnBackToTop.classList.add('opacity-100');
+      } else {
+        btnBackToTop.classList.remove('opacity-100');
+        btnBackToTop.classList.add('opacity-0', 'pointer-events-none');
+      }
+    });
+    btnBackToTop.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      resetCaptcha();
+      const now = new Date();
+      now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+      
+      const campoFecha = document.getElementById('incidentDateTime') || document.getElementById('fechaHoraHecho');
+      if (campoFecha) {
+        campoFecha.value = now.toISOString().slice(0, 16);
+      }
+    });
+
+    //==========================================================================================================
+    // Manejo de archivos de evidencias
+    //==========================================================================================================
+    // Selección múltiple y progresiva: El usuario puede seleccionar 2 archivos ahora y luego pulsar de nuevo para sumar 2 más sin perder los anteriores.  
+    // Control de topes: Si intenta subir un 6° archivo o supera los 15 MB, el sistema lo bloquea y muestra un aviso visual.
+    // Eliminación individual: Añade un botón con el ícono de cesto de basura junto a cada archivo para quitarlo de la lista antes de enviar.Compatibilidad de envío: Al actualizar inputEvidencias.files = listaArchivos.files, cuando el formulario hace el submit, envía en el POST exactamente los archivos que quedaron en la lista
+    const inputEvidencias = document.getElementById('evidencias');
+    const fileCountStatus = document.getElementById('fileCountStatus');
+    const fileListPreview = document.getElementById('fileListPreview');
+    const errorEvidencias = document.getElementById('errorEvidencias');
+
+    // Contenedor en memoria para acumular y manipular archivos
+    let listaArchivos = new DataTransfer();
+
+    const MAX_ARCHIVOS = 5;
+    const MAX_PESO_TOTAL_BYTES = 15 * 1024 * 1024; // 15 MB
+
+    inputEvidencias.addEventListener('change', function () {
+      errorEvidencias.classList.add('hidden');
+      errorEvidencias.textContent = '';
+
+      const nuevosArchivos = Array.from(this.files);
+
+      for (const archivo of nuevosArchivos) {
+        // 1. Validar límite máximo de 5 archivos
+        if (listaArchivos.items.length >= MAX_ARCHIVOS) {
+          mostrarErrorArchivo(`Solo se permite adjuntar hasta un máximo de ${MAX_ARCHIVOS} archivos.`);
+          break;
+        }
+
+        // 2. Evitar agregar exactamente el mismo archivo dos veces
+        const yaExiste = Array.from(listaArchivos.files).some(
+          f => f.name === archivo.name && f.size === archivo.size && f.lastModified === archivo.lastModified
+        );
+        if (yaExiste) continue;
+
+        // 3. Validar tamaño acumulado total (15 MB)
+        const pesoActual = Array.from(listaArchivos.files).reduce((acc, f) => acc + f.size, 0);
+        if (pesoActual + archivo.size > MAX_PESO_TOTAL_BYTES) {
+          mostrarErrorArchivo('El tamaño total acumulado excede el límite permitido de 15 MB.');
+          break;
+        }
+
+        // Agregar archivo al contenedor
+        listaArchivos.items.add(archivo);
+      }
+
+      // Actualizar el input con los archivos acumulados y refrescar vista
+      sincronizarInputYVista();
+    });
+
+    function eliminarArchivo(index) {
+      const dtActualizado = new DataTransfer();
+      const archivos = listaArchivos.files;
+
+      for (let i = 0; i < archivos.length; i++) {
+        if (i !== index) {
+          dtActualizado.items.add(archivos[i]);
+        }
+      }
+
+      listaArchivos = dtActualizado;
+      sincronizarInputYVista();
+    }
+
+    function sincronizarInputYVista() {
+      inputEvidencias.files = listaArchivos.files;
+      renderizarListaArchivos();
+    }
+
+    function renderizarListaArchivos() {
+      fileListPreview.innerHTML = '';
+      const total = listaArchivos.files.length;
+
+      if (total === 0) {
+        fileCountStatus.textContent = 'Ningún archivo seleccionado';
+        return;
+      }
+
+      fileCountStatus.textContent = `${total} de ${MAX_ARCHIVOS} archivo(s) adjunto(s)`;
+
+      Array.from(listaArchivos.files).forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded text-xs text-gray-700';
+        item.innerHTML = `
+          <div class="flex items-center gap-2 truncate pr-2">
+            <i class="fa-solid fa-paperclip text-muni-teal"></i>
+            <span class="font-medium truncate">${file.name}</span>
+            <span class="text-gray-400 text-[10px] font-mono">(${(file.size / (1024 * 1024)).toFixed(2)} MB)</span>
+          </div>
+          <button 
+            type="button" 
+            class="text-red-500 hover:text-red-700 p-1 rounded transition" 
+            onclick="eliminarArchivo(${index})"
+            title="Quitar archivo"
+          >
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        `;
+        fileListPreview.appendChild(item);
+      });
+    }
+
+    function mostrarErrorArchivo(mensaje) {
+      errorEvidencias.textContent = mensaje;
+      errorEvidencias.classList.remove('hidden');
+    }
+
+    window.addEventListener('pageshow', function (event) {
+      // Si la página se restauró desde el historial o la caché del navegador
+      if (event.persisted || performance.getEntriesByType("navigation")[0]?.type === "back_forward") {
+        // 1. Restaurar el estado y texto del botón de envío
+        const btnSubmit = document.getElementById('btnSubmit');
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.innerHTML = 'Enviar Denuncia';
+        }
+
+        // 2. Generar un nuevo código de Captcha en el servidor
+        resetCaptcha();
+      }
+    });
+
+  </script>
+</body>
+</html>

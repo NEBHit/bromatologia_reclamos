@@ -1,0 +1,57 @@
+    
+{% macro paginacion(page, total_pages, base_url, filtros={}) %}
+
+{% if total_pages > 1 %}
+<style>
+    /* Botones normales */
+    .pagination .page-link {
+        color: #6c757d;
+    }
+
+    /* Hover */
+    .pagination .page-link:hover {
+        color: #495057;
+    }
+
+    /* Página activa */
+    .pagination .page-item.active .page-link {
+        background-color: #adb5bd;
+        border-color: #adb5bd;
+        color: white;
+    }
+    /* Focus */
+    .pagination .page-link:focus {
+        box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+    }
+</style>
+<nav aria-label="Paginación">
+    <ul class="pagination justify-content-center">
+
+        {% if page > 1 %}
+        <li class="page-item">
+            <a class="page-link" href="{{ base_url }}?page={{ page - 1 }}{% for k,v in filtros.items() if v %}&{{k}}={{v}}{% endfor %}"> Anterior </a>
+        </li>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+                <li class="page-item active">
+                    <span class="page-link">{{ p }}</span>
+                </li>
+            {% elif p >= page-2 and p <= page+2 %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ base_url }}?page={{ p }}{% for k,v in filtros.items() if v %}&{{k}}={{v}}{% endfor %}"> {{ p }}</a>
+                </li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page < total_pages %}
+        <li class="page-item">
+            <a class="page-link" href="{{ base_url }}?page={{ page + 1 }}{% for k,v in filtros.items() if v %}&{{k}}={{v}}{% endfor %}"> Siguiente</a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endmacro %}
+

@@ -1,0 +1,667 @@
+{% block modal %}
+<!-- Estilos de Leaflet para el mapa dentro del modal -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<div class="modal fade" id="modalReclamo" tabindex="-1" role="dialog" data-backdrop="true" data-keyboard="true" aria-labelledby="modalReclamoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content border-0 shadow-lg">
+
+      <!-- Encabezado Modal -->
+      <div class="modal-header bg-dark text-white py-2 px-3">
+        <div>
+          <h5 class="modal-title font-weight-bold mb-0" id="modalReclamoLabel">
+            <i class="fa-solid fa-folder-open text-warning mr-2"></i>Expediente: <span id="lblExpediente">Cargando...</span>
+          </h5>
+          <small class="text-white-50" id="lblSubtitulo">Detalle integral del reclamo ingresado</small>
+        </div>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+
+      <!-- Navegación por Pestañas -->
+      <ul class="nav nav-tabs px-3 pt-2 modal-tab-header" id="tabsReclamo" role="tablist">
+        <li class="nav-item">
+          <a class="nav-link active" id="tab-gestion-link" data-toggle="tab" href="#tab-gestion" role="tab">
+            <i class="fa-solid fa-file-lines mr-1 text-primary"></i> Detalle del Reclamo
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="tab-comercio-link" data-toggle="tab" href="#tab-comercio" role="tab">
+            <i class="fa-solid fa-store mr-1 text-info"></i> Comercio & Mapa
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="tab-evidencias-link" data-toggle="tab" href="#tab-evidencias" role="tab">
+            <i class="fa-solid fa-paperclip mr-1 text-danger"></i> Evidencias (<span id="cantEvidencias">0</span>)
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" id="tab-denunciante-link" data-toggle="tab" href="#tab-denunciante" role="tab">
+            <i class="fa-solid fa-user-shield mr-1 text-secondary"></i> Datos Denunciante
+          </a>
+        </li>
+        <!-- Solapa Operativa como última -->
+        <li class="nav-item">
+          <a class="nav-link" id="tab-operativo-link" data-toggle="tab" href="#tab-operativo" role="tab">
+            <i class="fa-solid fa-user-check mr-1 text-success"></i> Estado de Inspección
+          </a>
+        </li>
+      </ul>
+
+      <form id="formReclamoUpdate" method="post">
+        <input type="hidden" id="idReclamoEdit" name="idReclamoEdit"/>
+        <input type="hidden" id="prioridadReclamoEdit" name="prioridad" value="false"/>
+
+        <div class="modal-body p-3" style="min-height: 380px;">
+          <div class="tab-content" id="tabsReclamoContent">
+
+            <!-- ============================================== -->
+            <!-- TAB 1: DETALLE DEL HECHO Y REPORTE             -->
+            <!-- ============================================== -->
+            <div class="tab-pane fade show active" id="tab-gestion" role="tabpanel">
+              
+              <!-- Resumen General del Hecho -->
+              <div class="card border-0 shadow-sm mb-2">
+                <div class="card-header modal-card-header py-2">
+                  <span class="modal-card-subtitle">
+                    <i class="fa-solid fa-circle-info text-info mr-2"></i>Resumen General del Hecho
+                  </span>
+                </div>
+                <div class="card-body py-2 px-3 bg-white">
+                  <!-- Fila superior -->
+                  <div class="row align-items-center mb-2">
+                    <div class="col-md-4">
+                      <span class="data-label">Fecha y Hora del Hecho</span>
+                      <strong class="data-value d-block" id="txtFechaHecho">--</strong>
+                    </div>
+                    <div class="col-md-4">
+                      <span class="data-label">Comercio / Denunciado</span>
+                      <strong class="data-value d-block" id="txtComercioResumen">--</strong>
+                    </div>
+                    <div class="col-md-4">
+                      <span class="data-label">Categorías Afectadas</span>
+                      <div id="txtCategoriasBadges" class="mt-1">
+                        <span class="badge badge-light border">Sin categorías</span>
+                      </div>
+                      <small class="text-muted d-block mt-1" id="txtCategoriaDetalle" style="display: none;"></small>
+                    </div>
+                  </div>
+                    
+                  <!-- Fila Prioridad / Intoxicación -->
+                  <div class="row mb-2">
+                    <div class="col-12">
+                      <div id="txtPrioridadBadge">
+                        <span class="badge badge-secondary py-1 px-2">Cargando prioridad...</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Informe / Relato -->
+                  <div class="pt-2 mt-2 ">
+                    <span class="data-label mb-1">INFORME / RELATO DEL INCIDENTE REPORTADO:</span>
+                    <textarea id="txtIncidenteReportado" 
+                              class="form-control bg-light text-dark" 
+                              rows="3" 
+                              readonly 
+                              style="resize: none; font-size: 0.92rem; line-height: 1.4;"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Detalle de Producto / Alimento -->
+              <div class="card border-0 shadow-sm mb-2 d-none" id="bloqueDetalleAlimento">
+                <div class="card-header modal-card-header py-2">
+                  <span class="modal-card-subtitle">
+                    <i class="fa-solid fa-utensils text-warning mr-2"></i>Detalle del Alimento / Producto Involucrado
+                  </span>
+                </div>
+                <div class="card-body py-2 px-3 bg-white">
+                  <div class="row">
+                    <div class="col-md-3 mb-1">
+                      <span class="data-label">Producto / Marca:</span>
+                      <strong class="data-value" id="txtAlimentoNombre">--</strong>
+                    </div>
+                    <div class="col-md-3 mb-1">
+                      <span class="data-label">Nro. de Lote:</span>
+                      <span class="data-value font-weight-bold" id="txtAlimentoLote">--</span>
+                    </div>
+                    <div class="col-md-3 mb-1">
+                      <span class="data-label">Fecha Vencimiento:</span>
+                      <span class="data-value font-weight-bold" id="txtAlimentoVencimiento">--</span>
+                    </div>
+                    <div class="col-md-3 mb-1">
+                      <span class="data-label">Estado de Conservación:</span>
+                      <span class="data-value font-weight-bold" id="txtAlimentoConservacion">--</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+            
+            <!-- ============================================== -->
+            <!-- TAB 2: COMERCIO & MAPA                         -->
+            <!-- ============================================== -->
+            <div class="tab-pane fade" id="tab-comercio" role="tabpanel">
+              <div class="row">
+                <div class="col-lg-5">
+                  <div class="card border-0 shadow-sm mb-2">
+                    <div class="card-header modal-card-header py-2">
+                      <span class="modal-card-subtitle">
+                        <i class="fa-solid fa-shop text-info mr-2"></i>Datos del Establecimiento
+                      </span>
+                    </div>
+                    <div class="card-body py-2 px-3 bg-white">
+                      <div class="mb-2">
+                        <span class="data-label">Nombre de Fantasía:</span>
+                        <strong class="data-value" id="cComercioNombre">--</strong>
+                      </div>
+                      <div class="mb-2">
+                        <span class="data-label">Dirección / Calle:</span>
+                        <span class="data-value font-weight-bold" id="cCalle">--</span>
+                      </div>
+                      <div class="mb-2">
+                        <span class="data-label">Localidad:</span>
+                        <span class="data-value font-weight-bold" id="cLocalidad">--</span>
+                      </div>
+                      <div class="mb-2">
+                        <span class="data-label">Teléfono / Celular:</span>
+                        <span class="data-value font-weight-bold" id="cCelComercio">--</span>
+                      </div>
+                      <div class="mb-1">
+                        <span class="data-label">Horarios de Atención:</span>
+                        <span class="data-value font-weight-bold" id="cHorarios">--</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-lg-7">
+                  <div class="card border-0 shadow-sm mb-2">
+                    <div class="card-header modal-card-header py-2 d-flex justify-content-between align-items-center">
+                      <span class="modal-card-subtitle">
+                        <i class="fa-solid fa-map-location-dot text-danger mr-2"></i>Ubicación Georreferenciada
+                      </span>
+                      <small class="badge badge-light border" id="cCoordText">Sin coordenadas</small>
+                    </div>
+                    <div class="card-body p-2 bg-white">
+                      <div id="mapaModalReclamo"></div>
+                      <div id="mapaSinCoords" class="text-center py-5 d-none text-muted">
+                        <i class="fa-solid fa-location-crosshairs fa-2x mb-2 text-secondary"></i>
+                        <p class="mb-0">Este reclamo no posee coordenadas registradas.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 3: EVIDENCIAS & ARCHIVOS                   -->
+            <!-- ============================================== -->
+            <div class="tab-pane fade" id="tab-evidencias" role="tabpanel">
+              <div class="card border-0 shadow-sm mb-2">
+                <div class="card-header modal-card-header py-2">
+                  <span class="modal-card-subtitle">
+                    <i class="fa-solid fa-paperclip text-danger mr-2"></i>Documentos y Fotografías Adjuntas
+                  </span>
+                </div>
+                <div class="card-body py-2 px-3 bg-white">
+                  <div id="contenedorEvidencias" class="row"></div>
+                  <div id="sinEvidencias" class="text-center py-5 text-muted d-none">
+                    <i class="fa-regular fa-images fa-3x mb-2 text-black-50"></i>
+                    <p class="mb-0">No se adjuntaron fotografías ni documentos en este reclamo.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 4: DATOS DEL DENUNCIANTE                   -->
+            <!-- ============================================== -->
+            <div class="tab-pane fade" id="tab-denunciante" role="tabpanel">
+              <div class="card border-0 shadow-sm mb-2">
+                <div class="card-header modal-card-header py-2">
+                  <span class="modal-card-subtitle">
+                    <i class="fa-solid fa-user-shield text-secondary mr-2"></i>Información del Solicitante / Denunciante
+                  </span>
+                </div>
+                <div class="card-body py-2 px-3 bg-white">
+                  <div id="bloqueAnonimo" class="alert alert-info d-none mb-0">
+                    <i class="fa-solid fa-user-secret fa-2x float-left mr-3"></i>
+                    <strong>Denuncia Anónima</strong>
+                    <p class="mb-0 small">El vecino optó por resguardar su identidad. No constan datos personales de contacto.</p>
+                  </div>
+
+                  <div id="bloqueDatosDenunciante">
+                    <div class="row">
+                      <div class="col-md-6 mb-2">
+                        <span class="data-label">Nombre Completo</span>
+                        <strong class="data-value" id="dNombreCompleto">--</strong>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <span class="data-label">Correo Electrónico</span>
+                        <span class="data-value font-weight-bold" id="dEmail">--</span>
+                      </div>
+                      <div class="col-md-6 mb-2">
+                        <span class="data-label">Teléfono / Celular de Contacto</span>
+                        <span class="data-value font-weight-bold" id="dTelefono">--</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ============================================== -->
+            <!-- TAB 5: ESTADO OPERATIVO & INSPECTOR (ÚLTIMA)   -->
+            <!-- ============================================== -->
+            <div class="tab-pane fade" id="tab-operativo" role="tabpanel">
+              <div class="card border-0 shadow-sm mb-2">
+                <div class="card-header modal-card-header py-2">
+                  <span class="modal-card-subtitle">
+                    <i class="fa-solid fa-pen-to-square text-primary mr-2"></i>Gestión Operativa del Trámite
+                  </span>
+                </div>
+                <div class="card-body py-3 px-3 bg-white">
+                  <div class="form-row mb-3">
+                    <!-- Estado del reclamo -->
+                    <div class="col-md-6 form-group mb-2">
+                      <label for="estadoReclamoEdit" class="data-label mb-1 font-weight-bold">
+                        Estado Actual <span class="text-danger">*</span>
+                      </label>
+                      <select class="form-control" id="estadoReclamoEdit" name="estado" style="height: 38px;">
+                        {% if estados %}
+                          {% for est in estados %}
+                            <option value="{{ est.idEstadoReclamo }}">{{ est.nombre }}</option>
+                          {% endfor %}
+                        {% endif %}
+                      </select>
+                    </div>
+
+                    <!-- Inspector Asignado -->
+                    <div class="col-md-6 form-group mb-2">
+                      <label for="inspectorReclamoEdit" class="data-label mb-1 font-weight-bold">
+                        Inspector Asignado
+                      </label>
+                      <select class="form-control" id="inspectorReclamoEdit" name="idInspector" style="height: 38px;">
+                        <option value="">-- Sin asignar --</option>
+                        {% if inspectores %}
+                          {% for insp in inspectores %}
+                            <option value="{{ insp.idInspector }}">{{ insp.nombre }} {{ insp.apellido }}</option>
+                          {% endfor %}
+                        {% endif %}
+                      </select>
+                    </div>
+                  </div>
+
+                  <!-- Observaciones y Resoluciones -->
+                  <div class="form-group mb-1">
+                    <label for="descripcionReclamoEdit" class="data-label mb-1 font-weight-bold">
+                      Observaciones / Acta / Resolución Municipal (Solo Mayúsculas)
+                    </label>
+                    <textarea class="form-control" 
+                              id="descripcionReclamoEdit" 
+                              name="descripcion" 
+                              rows="4" 
+                              required 
+                              style="text-transform: uppercase;"
+                              oninput="this.value = this.value.toUpperCase();"
+                              placeholder="INGRESE LAS ACTAS, OBSERVACIONES O RESOLUCIÓN DEL TRÁMITE..."></textarea>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- FOOTER: BOTÓN CERRAR Y GUARDAR -->
+        <div class="modal-footer py-2 px-3 border-top">
+          <button type="button" 
+                  class="btn px-4 shadow-sm font-weight-bold text-uppercase d-flex align-items-center justify-content-center" 
+                  data-dismiss="modal"
+                  style="height: 38px; background-color: #a3cfbb; border-color: #a3cfbb; color: #14532d; font-size: 0.85rem; letter-spacing: 0.5px;">
+            <i class="bi bi-x-circle mr-1"></i> Cerrar
+          </button>
+          
+          <button type="submit" 
+                  class="btn btn-success px-4 shadow-sm font-weight-bold text-uppercase d-flex align-items-center justify-content-center" 
+                  id="modificar_Reclamo"
+                  style="height: 38px; font-size: 0.85rem; letter-spacing: 0.5px;">
+            <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Modificaciones
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  let modalMap = null;
+  let modalMarker = null;
+
+  async function cargarInspectoresSelect() {
+    const select = document.getElementById('inspectorReclamoEdit');
+    if (!select) return;
+
+    if (select.options.length <= 1) {
+      try {
+        const resp = await fetch('/inspectores/api/list');
+        if (resp.ok) {
+          const list = await resp.json();
+          list.forEach(insp => {
+            const opt = document.createElement('option');
+            opt.value = insp.idInspector;
+            opt.textContent = `${insp.nombre} ${insp.apellido}`;
+            select.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.warn("Aviso: no se cargó lista remota de inspectores:", e);
+      }
+    }
+  }
+
+  async function cargarDatosReclamoModal(idReclamo) {
+    try {
+      // 1. Cargar inspectores de forma segura
+      await cargarInspectoresSelect();
+
+      // 2. Fetch a la información del reclamo
+      const resp = await fetch(`/reclamos/${idReclamo}/data`);
+
+      if (!resp.ok) {
+        console.error(`HTTP error ${resp.status} al solicitar /reclamos/${idReclamo}/data`);
+        alert("No se pudo cargar la información del reclamo.");
+        return;
+      }
+
+      const data = await resp.json();
+
+      // Elementos base
+      const elId = document.getElementById('idReclamoEdit');
+      if (elId) elId.value = data.idReclamo;
+
+      const elExp = document.getElementById('lblExpediente');
+      if (elExp) elExp.textContent = data.nroExpediente || `BRO-${data.idReclamo}`;
+
+      const elSub = document.getElementById('lblSubtitulo');
+      if (elSub) elSub.textContent = `${data.comercioNombre || 'Sin nombre'} · ${data.calle || ''}`;
+
+      // Tab Resumen
+      const elFecha = document.getElementById('txtFechaHecho');
+      if (elFecha) elFecha.textContent = data.fechaHoraHecho || '--';
+
+      const elComRes = document.getElementById('txtComercioResumen');
+      if (elComRes) elComRes.textContent = data.comercioNombre || '--';
+
+      const elInc = document.getElementById('txtIncidenteReportado');
+      if (elInc) elInc.value = data.incidenteHecho || 'Sin relato detallado';
+
+      // Prioridad vecinal
+      const contPrioridadBadge = document.getElementById('txtPrioridadBadge');
+      const esPrioridadAlta = (data.prioridad === true || data.prioridad === 1 || data.prioridad === "1" || data.prioridad === "true");
+
+      if (contPrioridadBadge) {
+        if (esPrioridadAlta) {
+          contPrioridadBadge.innerHTML = `
+            <div class="alert alert-danger mb-0 py-2 px-3 d-flex align-items-center font-weight-bold" style="font-size: 0.88rem;">
+              <i class="fa-solid fa-triangle-exclamation mr-2 fa-lg"></i>
+              <strong>PRIORIDAD ALTA: El usuario declaró riesgo inmediato o sospecha de intoxicación en curso.</strong>
+            </div>
+          `;
+        } else {
+          contPrioridadBadge.innerHTML = `
+            <div class="alert alert-secondary mb-0 py-2 px-3 text-muted d-flex align-items-center" style="font-size: 0.88rem;">
+              <i class="fa-solid fa-circle-check text-success mr-2 fa-lg"></i>
+              <strong>Prioridad Normal: No se declaró riesgo inmediato ni sospecha de intoxicación.</strong>
+            </div>
+          `;
+        }
+      }
+
+      // Tab Gestión Operativa (Campos editables)
+      const elEstado = document.getElementById('estadoReclamoEdit');
+      if (elEstado) elEstado.value = data.idEstadoActual || 1;
+
+      document.getElementById('inspectorReclamoEdit').value = data.idInspector ? String(data.idInspector) : "";
+
+      const elPrioInput = document.getElementById('prioridadReclamoEdit');
+      if (elPrioInput) elPrioInput.value = esPrioridadAlta ? "true" : "false";
+
+      const elInspector = document.getElementById('inspectorReclamoEdit');
+      if (elInspector) elInspector.value = data.idInspector || "";
+
+      const elDesc = document.getElementById('descripcionReclamoEdit');
+      if (elDesc) elDesc.value = (data.resolucion || data.observaciones || '').toUpperCase();
+
+      // Badges Categorías
+      const contBadges = document.getElementById('txtCategoriasBadges');
+      if (contBadges) {
+        contBadges.innerHTML = '';
+        if (data.categorias && data.categorias.length > 0) {
+          data.categorias.forEach(cat => {
+            const badge = document.createElement('span');
+            badge.className = 'badge badge-primary mr-1 mb-1';
+            badge.textContent = cat.nombre;
+            contBadges.appendChild(badge);
+          });
+        } else {
+          contBadges.innerHTML = '<span class="badge badge-light border">Sin categorías específicas</span>';
+        }
+      }
+
+      const txtCatDetalle = document.getElementById('txtCategoriaDetalle');
+      if (txtCatDetalle) {
+        if (data.categoriaDetalle && data.categoriaDetalle.trim() !== '') {
+          txtCatDetalle.textContent = `Aclaración: ${data.categoriaDetalle}`;
+          txtCatDetalle.style.display = 'block';
+        } else {
+          txtCatDetalle.textContent = '';
+          txtCatDetalle.style.display = 'none';
+        }
+      }
+
+      // Detalle Alimento
+      const bloqueAlimento = document.getElementById('bloqueDetalleAlimento');
+      if (bloqueAlimento) {
+        if (data.detalleAlimento) {
+          bloqueAlimento.classList.remove('d-none');
+          document.getElementById('txtAlimentoNombre').textContent = data.detalleAlimento.productoNombreMarca || 'No especificado';
+          document.getElementById('txtAlimentoLote').textContent = data.detalleAlimento.nroLote || 'Sin lote';
+          document.getElementById('txtAlimentoVencimiento').textContent = data.detalleAlimento.fechaVencimiento || 'Sin fecha';
+          document.getElementById('txtAlimentoConservacion').textContent = data.detalleAlimento.estadoConservacion || 'No indicado';
+        } else {
+          bloqueAlimento.classList.add('d-none');
+        }
+      }
+
+      // Tab Comercio
+      const elComNom = document.getElementById('cComercioNombre');
+      if (elComNom) elComNom.textContent = data.comercioNombre || 'Sin nombre';
+
+      const elCalle = document.getElementById('cCalle');
+      if (elCalle) elCalle.textContent = data.calle || '--';
+
+      const elLoc = document.getElementById('cLocalidad');
+      if (elLoc) elLoc.textContent = data.localidadNombre || '--';
+      
+      const celComercio = (data.areaCelComercio ? `(${data.areaCelComercio}) ` : '') + (data.nroCelComercio || '');
+      const elCel = document.getElementById('cCelComercio');
+      if (elCel) elCel.textContent = celComercio.trim() || 'No informado';
+
+      let horarioStr = 'No informado';
+      if (data.horaApertura && data.horaCierre) {
+        horarioStr = `${data.horaApertura} hs a ${data.horaCierre} hs`;
+      } else if (data.horaApertura) {
+        horarioStr = `Desde ${data.horaApertura} hs`;
+      }
+      const elHor = document.getElementById('cHorarios');
+      if (elHor) elHor.textContent = horarioStr;
+
+      renderizarMapaModal(data.latitud, data.longitud, data.comercioNombre);
+      renderizarEvidencias(data.evidencias);
+
+      // Tab Denunciante
+      const bloqAnonimo = document.getElementById('bloqueAnonimo');
+      const bloqDenun = document.getElementById('bloqueDatosDenunciante');
+      if (data.esAnonimo) {
+        if (bloqAnonimo) bloqAnonimo.classList.remove('d-none');
+        if (bloqDenun) bloqDenun.classList.add('d-none');
+      } else {
+        if (bloqAnonimo) bloqAnonimo.classList.add('d-none');
+        if (bloqDenun) bloqDenun.classList.remove('d-none');
+
+        const nom = data.nomDenunciante || '';
+        const ape = data.apeDenunciante || '';
+        const nombreCompleto = `${nom} ${ape}`.trim();
+        document.getElementById('dNombreCompleto').textContent = nombreCompleto || 'No especificado';
+        document.getElementById('dEmail').textContent = data.emailDenunciante || 'No informado';
+        
+        const celDenun = (data.areaCelDenunciante ? `(${data.areaCelDenunciante}) ` : '') + (data.nroCelDenunciante || '');
+        document.getElementById('dTelefono').textContent = celDenun.trim() || 'No informado';
+      }
+
+    } catch (e) {
+      console.error("Error en cargarDatosReclamoModal:", e);
+      alert("Error de conexión al cargar datos.");
+    }
+  }
+
+  function renderizarMapaModal(lat, lng, titulo) {
+    const mapaDiv = document.getElementById('mapaModalReclamo');
+    const sinCoordsDiv = document.getElementById('mapaSinCoords');
+    const coordText = document.getElementById('cCoordText');
+
+    if (!mapaDiv) return;
+
+    if (!lat || !lng) {
+      mapaDiv.classList.add('d-none');
+      if (sinCoordsDiv) sinCoordsDiv.classList.remove('d-none');
+      if (coordText) coordText.textContent = "Sin coordenadas registradas";
+      return;
+    }
+
+    mapaDiv.classList.remove('d-none');
+    if (sinCoordsDiv) sinCoordsDiv.classList.add('d-none');
+    if (coordText) coordText.textContent = `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`;
+
+    const coords = [lat, lng];
+
+    if (!modalMap) {
+      modalMap = L.map('mapaModalReclamo').setView(coords, 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(modalMap);
+      modalMarker = L.marker(coords).addTo(modalMap);
+    } else {
+      modalMap.setView(coords, 15);
+      if (modalMarker) {
+        modalMarker.setLatLng(coords);
+      } else {
+        modalMarker = L.marker(coords).addTo(modalMap);
+      }
+    }
+    modalMarker.bindPopup(`<strong>${titulo || 'Comercio'}</strong>`).openPopup();
+  }
+
+  $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    if (e.target.id === 'tab-comercio-link' && modalMap) {
+      setTimeout(() => {
+        modalMap.invalidateSize();
+      }, 150);
+    }
+  });
+
+  function renderizarEvidencias(evidencias) {
+    const cont = document.getElementById('contenedorEvidencias');
+    const sinEvidencias = document.getElementById('sinEvidencias');
+    const badgeCant = document.getElementById('cantEvidencias');
+
+    if (!cont) return;
+    cont.innerHTML = '';
+    const cantidad = evidencias ? evidencias.length : 0;
+    if (badgeCant) badgeCant.textContent = cantidad;
+
+    if (!evidencias || evidencias.length === 0) {
+      if (sinEvidencias) sinEvidencias.classList.remove('d-none');
+      return;
+    }
+
+    if (sinEvidencias) sinEvidencias.classList.add('d-none');
+
+    evidencias.forEach(ev => {
+      const col = document.createElement('div');
+      col.className = 'col-md-3 col-sm-6 mb-3 text-center';
+
+      const esImagen = ev.tipoMime && ev.tipoMime.startsWith('image/');
+      const rutaUrl = ev.rutaAlmacenamiento.startsWith('/') ? ev.rutaAlmacenamiento : '/' + ev.rutaAlmacenamiento;
+
+      if (esImagen) {
+        col.innerHTML = `
+          <a href="${rutaUrl}" target="_blank" title="${ev.nombreArchivo}">
+            <img src="${rutaUrl}" class="evidencia-thumb mb-2 shadow-sm" alt="Foto">
+          </a>
+          <small class="d-block text-truncate text-muted" title="${ev.nombreArchivo}">${ev.nombreArchivo}</small>
+        `;
+      } else {
+        col.innerHTML = `
+          <div class="border rounded p-3 bg-white shadow-sm mb-2 d-flex flex-column align-items-center justify-content-center" style="height: 120px;">
+            <i class="fa-solid fa-file-pdf fa-2x text-danger mb-2"></i>
+            <a href="${rutaUrl}" target="_blank" class="small font-weight-bold text-truncate w-100" title="${ev.nombreArchivo}">
+              Descargar
+            </a>
+          </div>
+          <small class="d-block text-truncate text-muted" title="${ev.nombreArchivo}">${ev.nombreArchivo}</small>
+        `;
+      }
+
+      cont.appendChild(col);
+    });
+  }
+
+  document.getElementById('formReclamoUpdate').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const id = document.getElementById('idReclamoEdit').value;
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const desc = (formData.get('descripcion') || '').toString().trim().toUpperCase();
+    const idInspector = formData.get('idInspector');
+
+    const datos = {
+      descripcion: desc,
+      idEstado: parseInt(formData.get('estado')),
+      idInspector: idInspector ? parseInt(idInspector) : null,
+      prioridad: formData.get('prioridad') === "true"
+    };
+
+    try {
+      const response = await fetch(`/reclamos/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || data.message || "Error al actualizar");
+        return;
+      }
+
+      alert(data.message || "Reclamo actualizado exitosamente");
+      $('#modalReclamo').modal('hide');
+      location.reload();
+
+    } catch (err) {
+      alert('Error de red: ' + err.message);
+    }
+  });
+</script>
+{% endblock modal %}
