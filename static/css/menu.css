@@ -1,0 +1,79 @@
+/* --- MENÚ PRINCIPAL MODERNO --- */
+.navbar-dark {
+  background: linear-gradient(90deg, #0d0d0d, #1a1a1a);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+/* --- SUBMENÚS --- */
+.navbar-dark .dropdown-menu {
+  background: rgba(25, 25, 25, 0.95);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  transition: all 0.3s ease;
+}
+
+/* --- Ítems del submenú --- */
+.navbar-dark .dropdown-item {
+  color: #e0e0e0;
+  padding: 10px 22px;
+  border-radius: 8px;
+}
+
+/* --- Hover y foco en ítems --- */
+.navbar-dark .dropdown-item:hover,
+.navbar-dark .dropdown-item:focus {
+  background-color: #fc9cd7;    /* Rosa pastel moderno */
+  color: #ffffff;
+  border-radius: 12px;            /* Bordes redondeados */
+  transform: translateX(4px);     /* Desplazamiento suave */
+  transition: all 0.25s ease-in-out;
+  box-shadow: 0 2px 8px rgba(252, 156, 215, 0.4); /* Sombra delicada */
+}
+
+/* --- Flechita de despliegue más visible --- */
+.navbar-dark .nav-link.dropdown-toggle::after {
+  border-top-color: #f8f9fa;
+}
+
+/* --- Texto del menú principal --- */
+/*.navbar-dark .nav-link {
+  color: #f8f9fa;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease;
+}
+
+.navbar-dark .nav-link:hover {
+  color: #fc9cd7;
+}*/
+
+/* --- Ajuste en pantallas pequeñas --- */
+@media (max-width: 992px) {
+  .navbar-dark .dropdown-menu {
+    background: #111;
+    box-shadow: none;
+  }
+}
+
+
+/* --- TEXTO DEL MENÚ PRINCIPAL --- */
+.navbar-dark .nav-link {
+    color: #f8f9fa;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+
+    /* IMPORTANTE: conservar separación */
+    padding: 0.5rem 1rem !important;
+}
+
+/* --- ESPACIO ENTRE OPCIONES --- */
+.navbar-dark .navbar-nav .nav-item {
+    margin-right: 0.25rem;
+}
+
+.navbar-dark .nav-link:hover {
+    color: #fc9cd7;
+}

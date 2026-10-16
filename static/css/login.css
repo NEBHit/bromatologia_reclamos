@@ -1,0 +1,29 @@
+
+.captcha-box {
+    font-family: 'Courier New', monospace;
+    font-size: 1.6rem;
+    font-weight: bold;
+    letter-spacing: 4px;
+    color: #0d6efd;
+    background: linear-gradient(135deg, #f1f3f5, #e9ecef);
+    border: 1px dashed #adb5bd;
+    border-radius: 6px;
+    user-select: none;
+    transform: rotate(-2deg);
+}
+
+#btn-refresh-captcha i {
+    transition: transform 0.4s;
+}
+
+#btn-refresh-captcha:hover i {
+    transform: rotate(180deg);
+}
+
+#togglePassword i {
+    font-size: 1.1rem;
+}
+
+#togglePassword:hover {
+    background-color: #e9ecef;
+}
